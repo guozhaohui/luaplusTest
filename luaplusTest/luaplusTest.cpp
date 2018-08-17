@@ -40,11 +40,11 @@ static int LS_AddPrint(LuaState* state)
 	return 0;
 }
 
-int main()
+/**
+ * call cpp functions from lua code
+ */
+void call_cpp_functions( LuaState* state )
 {
-	LuaState* state = LuaState::Create();
-	state->OpenLibs(); /* for using print function in lua code */
-
 	/* create meta table */
 	LuaObject metaTableObj = state->GetGlobals().CreateTable("MultiObjectMetaTable");
 	metaTableObj.SetObject("__index", metaTableObj);
@@ -86,7 +86,7 @@ int main()
 	MultiObject obj3(30);
 	globalObj.RegisterDirect("obj3_Print2", obj3, &MultiObject::Print2);
 	state->DoString("obj3_Print2(5)");
-	
+
 	/* use Register and call via LuaStack */
 	state->GetGlobals().Register("AddPrint", LS_AddPrint);
 	state->DoString("AddPrint(5, 10, \"Hello\")");
@@ -95,7 +95,13 @@ int main()
 	LuaCall call = addPrintObj;
 	call << 5 << 10 << "Hello" << LuaRun();
 	printf("start_top: %d, end_top: %d\n", top, state->GetTop());
+}
 
+/**
+ * call lua functions from cpp code
+ */
+void call_lua_functions( LuaState* state )
+{
 	/* use LuaCall */
 	state->DoString("function Add(x, y) return x + y end");
 	//LuaFunction<float> AddFunc(state, "Add");
@@ -111,6 +117,18 @@ int main()
 	LuaObject printObj = state->GetGlobal("PrintImp");
 	LuaCall printCall = printObj;
 	printCall << "Hello World!" << LuaRun();
+
+}
+
+int main()
+{
+	LuaState* state = LuaState::Create();
+	state->OpenLibs();  /* for using print function .etc in lua code */
+
+	call_cpp_functions( state ); 
+	call_lua_functions( state );
+
+	LuaState::Destroy( state );
 
 	return 0;
 }
